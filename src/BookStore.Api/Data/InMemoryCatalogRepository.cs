@@ -247,6 +247,116 @@ public class InMemoryCatalogRepository : ICatalogRepository
                 Price = 199.00m,
                 ImageUrl = "https://placehold.co/600x400?text=GraphQL+Observability",
                 CreatedAtUtc = DateTime.UtcNow
+            },
+            new CatalogItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "GraphQL CLI Quickstart Kit",
+                Description = "Starter kit with cheat sheets and scripts for operating GraphQL CLI tools.",
+                Category = CatalogItemCategory.Merchandise,
+                DurationMinutes = 0,
+                Price = 24.90m,
+                ImageUrl = "https://placehold.co/600x400?text=CLI+Kit",
+                CreatedAtUtc = DateTime.UtcNow
+            },
+            new CatalogItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "Subscription Mastery Workshop",
+                Description = "Deep dive session on building resilient GraphQL subscriptions and transports.",
+                Category = CatalogItemCategory.Course,
+                DurationMinutes = 200,
+                Price = 229.00m,
+                ImageUrl = "https://placehold.co/600x400?text=Subscription+Workshop",
+                CreatedAtUtc = DateTime.UtcNow
+            },
+            new CatalogItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "GraphQL Patterns Field Guide",
+                Description = "Pocket guide covering resolver pipelines, batching, and caching strategies.",
+                Category = CatalogItemCategory.Book,
+                DurationMinutes = 0,
+                Price = 32.00m,
+                ImageUrl = "https://placehold.co/600x400?text=Patterns+Guide",
+                CreatedAtUtc = DateTime.UtcNow
+            },
+            new CatalogItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "API Gateway Hoodie",
+                Description = "Cozy hoodie featuring a diagram of GraphQL gateway architecture.",
+                Category = CatalogItemCategory.Merchandise,
+                DurationMinutes = 0,
+                Price = 69.00m,
+                ImageUrl = "https://placehold.co/600x400?text=Gateway+Hoodie",
+                CreatedAtUtc = DateTime.UtcNow
+            },
+            new CatalogItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "GraphQL Sandbox Notebook",
+                Description = "Dot-grid notebook for sketching schemas and client flows during workshops.",
+                Category = CatalogItemCategory.Merchandise,
+                DurationMinutes = 0,
+                Price = 17.50m,
+                ImageUrl = "https://placehold.co/600x400?text=Sandbox+Notebook",
+                CreatedAtUtc = DateTime.UtcNow
+            },
+            new CatalogItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "GraphQL Architecture Blueprint",
+                Description = "Detailed blueprint poster explaining layered GraphQL platform patterns.",
+                Category = CatalogItemCategory.Book,
+                DurationMinutes = 0,
+                Price = 38.00m,
+                ImageUrl = "https://placehold.co/600x400?text=Architecture+Blueprint",
+                CreatedAtUtc = DateTime.UtcNow
+            },
+            new CatalogItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "Client-Side GraphQL Lab",
+                Description = "Hands-on lab for configuring caching, pagination, and optimistic UI updates.",
+                Category = CatalogItemCategory.Course,
+                DurationMinutes = 160,
+                Price = 189.00m,
+                ImageUrl = "https://placehold.co/600x400?text=Client+Lab",
+                CreatedAtUtc = DateTime.UtcNow
+            },
+            new CatalogItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "GraphQL Challenge Coin",
+                Description = "Limited edition coin awarded to workshop graduates.",
+                Category = CatalogItemCategory.Merchandise,
+                DurationMinutes = 0,
+                Price = 12.00m,
+                ImageUrl = "https://placehold.co/600x400?text=Challenge+Coin",
+                CreatedAtUtc = DateTime.UtcNow
+            },
+            new CatalogItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "GraphQL Performance Playbook",
+                Description = "Booklet focused on profiling, caching, and persisted operations at scale.",
+                Category = CatalogItemCategory.Book,
+                DurationMinutes = 0,
+                Price = 36.00m,
+                ImageUrl = "https://placehold.co/600x400?text=Performance+Playbook",
+                CreatedAtUtc = DateTime.UtcNow
+            },
+            new CatalogItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "Advanced Federation Sprint",
+                Description = "Short course helping teams ship multi-team GraphQL federation safely.",
+                Category = CatalogItemCategory.Course,
+                DurationMinutes = 140,
+                Price = 219.00m,
+                ImageUrl = "https://placehold.co/600x400?text=Federation+Sprint",
+                CreatedAtUtc = DateTime.UtcNow
             }
         };
 
