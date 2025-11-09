@@ -155,6 +155,33 @@ query GetCatalogPage($category: CatalogItemCategory, $page: Int = 1, $pageSize: 
 }
 ```
 
+#### การดึงข้อมูลทุกหน้า (get all)
+- API จำกัด `pageSize` ไว้สูงสุดที่ 50 ถ้าต้องการดึงทั้งหมดให้ตั้ง `pageSize` เป็น 50 แล้วเรียก `catalogItemsPage` ตั้งแต่ `page = 1` ไล่เพิ่มค่าหน้าไปเรื่อย ๆ จน `hasNextPage` เป็น `false`
+- แต่ละรอบให้ต่อผลลัพธ์ `items` สะสมไว้ใน client ฝั่งของคุณ
+
+ตัวอย่าง pseudo code (JavaScript):
+
+```javascript
+let page = 1;
+const pageSize = 50;
+let allItems = [];
+let hasNextPage = true;
+
+while (hasNextPage) {
+  const result = await graphQLClient.request(
+    GET_CATALOG_PAGE,
+    { page, pageSize }
+  );
+
+  const { items, hasNextPage: next } = result.catalogItemsPage;
+  allItems = allItems.concat(items);
+  hasNextPage = next;
+  page += 1;
+}
+
+console.log(`รวม ${allItems.length} รายการ`);
+```
+
 #### 3. ดึงรายละเอียดสินค้า/คอร์สตามรหัส
 ```graphql
 query GetItem($id: UUID!) {
