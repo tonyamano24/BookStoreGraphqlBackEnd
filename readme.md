@@ -10,6 +10,7 @@
 - **Docker Compose** ให้ Postgres + API ทำงานร่วมกันรวดเร็ว เหมาะกับ session ที่ต้องการ environment แบบเดียวกันทุกเครื่อง
 - **Image URL** สำหรับโชว์ตัวอย่างปกหนังสือ/สินค้าใน UI ได้เลยทันทีจาก GraphQL
 - **GraphQL Pagination** มี query `catalogItemsPage` สำหรับเลื่อนหน้าทั้งแบบกรอง category และได้ total count (ไม่ส่ง `pageSize` หรือส่ง `-1` ก็รับทั้งหมดในหน้าเดียวได้)
+- **Complex Detail Model** เพิ่ม query `catalogItemDetail` ที่คืน instructor profile, module breakdown, pricing tier, outcomes และ resource links หลายชั้น ใช้สอน nested GraphQL type ได้
 
 ## โครงสร้างโปรเจกต์
 
@@ -106,6 +107,18 @@ docker run --name bookstore-postgres \
   - `totalPages: Int!`
   - `hasPreviousPage: Boolean!`
   - `hasNextPage: Boolean!`
+- `CatalogItemDetail`
+  - `item: CatalogItem!`
+  - `instructor: InstructorProfile!`
+  - `modules: [ContentModule!]!`
+  - `pricingTiers: [PricingTier!]!`
+  - `outcomes: [String!]!`
+  - `recommendedResources: [ResourceLink!]!`
+  - รองรับ nested type เพิ่มเติม:
+    - `InstructorProfile` มี `expertise`, `socialLinks`
+    - `ContentModule` แสดง `objectives`, `resources`, `level`
+    - `PricingTier` แสดง `benefits`
+    - `ResourceLink`/`ModuleResource` แสดง `url`, `type`
 
 ### Query ตัวอย่าง
 #### 1. ดึงรายการทั้งหมด (พร้อมตัวกรอง category)
@@ -186,6 +199,51 @@ query GetItem($id: UUID!) {
     durationHours
     imageUrl
     price
+  }
+}
+```
+
+#### 4. ดึงรายละเอียดเชิงลึก (Complex Model)
+```graphql
+query GetCatalogItemDetail($id: UUID!) {
+  catalogItemDetail(id: $id) {
+    item {
+      id
+      title
+      category
+      price
+    }
+    instructor {
+      fullName
+      yearsOfExperience
+      expertise
+      socialLinks {
+        title
+        url
+      }
+    }
+    modules {
+      title
+      level
+      durationMinutes
+      objectives
+      resources {
+        title
+        kind
+        url
+      }
+    }
+    pricingTiers {
+      name
+      price
+      benefits
+    }
+    outcomes
+    recommendedResources {
+      title
+      type
+      url
+    }
   }
 }
 ```

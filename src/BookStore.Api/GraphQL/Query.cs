@@ -28,4 +28,9 @@ public class Query
         int? normalizedPageSize = pageSize > 0 ? pageSize : null;
         return repository.GetItemsPage(category, page, normalizedPageSize);
     }
+
+    public CatalogItemDetail GetCatalogItemDetail(Guid id, [Service] CatalogItemDetailProvider detailProvider)
+    {
+        return detailProvider.GetDetail(id);
+    }
 }

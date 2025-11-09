@@ -18,6 +18,8 @@ else
     builder.Services.AddSingleton<ICatalogRepository, InMemoryCatalogRepository>();
 }
 
+builder.Services.AddSingleton<CatalogItemDetailProvider>();
+
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<Query>()
