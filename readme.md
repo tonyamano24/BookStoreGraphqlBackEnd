@@ -23,15 +23,44 @@ BookStoreGraphqlBackEnd/
 
 ## การเตรียมสภาพแวดล้อม
 1. ติดตั้ง [.NET 8 SDK](https://dotnet.microsoft.com/download)
-2. เปิดเทอร์มินัลที่โฟลเดอร์โปรเจกต์นี้
-3. รันคำสั่ง
+2. ติดตั้ง PostgreSQL (ทดสอบแล้วกับเวอร์ชัน 15+) หรือใช้ Docker ตามตัวอย่างด้านล่าง
+3. ตั้งค่า connection string ใน `appsettings.json` หรือ environment variable `POSTGRES_CONNECTION_STRING` เช่น  
+   `Host=localhost;Port=5432;Database=bookstore;Username=bookstore_app;Password=change-me`
+4. เปิดเทอร์มินัลที่โฟลเดอร์โปรเจกต์นี้แล้วรัน
    ```bash
    dotnet restore ./src/BookStore.Api/BookStore.Api.csproj
    dotnet run --project ./src/BookStore.Api/BookStore.Api.csproj
    ```
-4. เซิร์ฟเวอร์จะเปิดที่ `http://localhost:5000` (หรือพอร์ตที่ .NET กำหนด) และ GraphQL Playground/Schema explorer สามารถเข้าผ่าน `http://localhost:5000/graphql`
+5. เซิร์ฟเวอร์จะเปิดที่ `http://localhost:5000` (หรือพอร์ตที่ .NET กำหนด) และ GraphQL Playground/Schema explorer สามารถเข้าผ่าน `http://localhost:5000/graphql`
 
-> **หมายเหตุ:** โปรเจกต์นี้ใช้ข้อมูลจำลอง (mock data) ทั้งหมด จึงไม่มีฐานข้อมูลจริง สามารถปรับแก้ repository ให้เชื่อมกับฐานข้อมูลภายหลังได้
+> **หมายเหตุ:** ถ้าไม่ตั้งค่า connection string ระบบจะ fallback กลับไปใช้ in-memory repository เหมือนเดิม เหมาะกับ workshop ที่ไม่ต้องมีฐานข้อมูลจริง
+
+### ตัวอย่างการเปิด Postgres แบบรวดเร็วด้วย Docker
+```bash
+docker run --name bookstore-postgres \
+  -e POSTGRES_USER=bookstore_app \
+  -e POSTGRES_PASSWORD=change-me \
+  -e POSTGRES_DB=bookstore \
+  -p 5432:5432 \
+  -d postgres:16
+```
+เมื่อ API เชื่อมต่อสำเร็จ ตาราง `catalog_items` จะถูกสร้างให้อัตโนมัติพร้อม seed ข้อมูลตัวอย่าง 3 รายการ
+
+### ใช้งานด้วย Docker Compose (API + Postgres)
+1. สร้างอิมเมจและเปิดทุกบริการ
+   ```bash
+   docker compose up --build -d
+   ```
+2. รอ healthcheck ของ Postgres แล้วเข้า `http://localhost:8080/graphql`
+3. ดู log ของฝั่ง API
+   ```bash
+   docker compose logs -f api
+   ```
+4. ปิดและลบคอนเทนเนอร์
+   ```bash
+   docker compose down
+   ```
+คำสั่งนี้ใช้ volume `pgdata` เก็บข้อมูลถาวร หากต้องการล้างฐานข้อมูลให้รัน `docker compose down -v`
 
 ## สคีมาของ GraphQL
 - `CatalogItem`

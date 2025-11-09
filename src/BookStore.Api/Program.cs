@@ -1,11 +1,22 @@
 using BookStore.Api.Data;
 using BookStore.Api.GraphQL;
 using BookStore.Api.Models;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services
-    .AddSingleton<ICatalogRepository, InMemoryCatalogRepository>();
+var connectionString = builder.Configuration.GetConnectionString("CatalogDb")
+    ?? builder.Configuration["POSTGRES_CONNECTION_STRING"];
+
+if (!string.IsNullOrWhiteSpace(connectionString))
+{
+    builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString!));
+    builder.Services.AddSingleton<ICatalogRepository, PostgresCatalogRepository>();
+}
+else
+{
+    builder.Services.AddSingleton<ICatalogRepository, InMemoryCatalogRepository>();
+}
 
 builder.Services
     .AddGraphQLServer()

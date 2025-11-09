@@ -5,9 +5,9 @@ using HotChocolate.Types;
 namespace BookStore.Api.GraphQL;
 
 [ExtendObjectType(typeof(CatalogItem))]
-public static class CatalogItemNode
+public class CatalogItemNode
 {
-    public static string CategoryDisplayName([Parent] CatalogItem item)
+    public string CategoryDisplayName([Parent] CatalogItem item)
         => item.Category switch
         {
             CatalogItemCategory.Book => "Book",
@@ -16,6 +16,6 @@ public static class CatalogItemNode
             _ => item.Category.ToString()
         };
 
-    public static double DurationHours([Parent] CatalogItem item)
+    public double DurationHours([Parent] CatalogItem item)
         => Math.Round(item.DurationMinutes / 60d, 2);
 }
