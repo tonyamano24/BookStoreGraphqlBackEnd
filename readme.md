@@ -2,6 +2,13 @@
 
 โปรเจกต์นี้เป็นตัวอย่าง Backend สำหรับสอนการเรียกใช้งาน GraphQL API ด้วย .NET 8 (C#) สำหรับเว็บ/แอปที่ต้องการจัดการ "รายการหนังสือ-คอร์ส-สินค้า" โดยเน้นให้ฝั่ง Front-end ได้ฝึกฝนการเขียน Query, Mutation, การจัดการ state, loader และ error handling
 
+## ไฮไลท์ของระบบ
+- **Hot Chocolate GraphQL Server** พร้อมเปิดใช้งาน Filtering/Sorting ใน resolver เดียวกัน
+- **Repository แบบสลับได้**: ใช้ In-memory สำหรับ workshop หรือ Postgres ผ่าน `NpgsqlDataSource` เมื่อมี connection string
+- **Type Extension ของ `CatalogItem`** เติม field `categoryDisplayName` และ `durationHours` ที่คำนวณจากข้อมูลจริง
+- **Seeder อัตโนมัติ** ทั้งในหน่วยความจำและฐานข้อมูลจริง ทำให้ demo ได้ทันทีหลังรัน
+- **Docker Compose** ให้ Postgres + API ทำงานร่วมกันรวดเร็ว เหมาะกับ session ที่ต้องการ environment แบบเดียวกันทุกเครื่อง
+
 ## โครงสร้างโปรเจกต์
 
 ```
@@ -23,17 +30,29 @@ BookStoreGraphqlBackEnd/
 
 ## การเตรียมสภาพแวดล้อม
 1. ติดตั้ง [.NET 8 SDK](https://dotnet.microsoft.com/download)
-2. ติดตั้ง PostgreSQL (ทดสอบแล้วกับเวอร์ชัน 15+) หรือใช้ Docker ตามตัวอย่างด้านล่าง
+2. ติดตั้ง PostgreSQL (ทดสอบแล้วกับเวอร์ชัน 15+) หรือเตรียม Docker Engine สำหรับใช้ docker-compose
 3. ตั้งค่า connection string ใน `appsettings.json` หรือ environment variable `POSTGRES_CONNECTION_STRING` เช่น  
    `Host=localhost;Port=5432;Database=bookstore;Username=bookstore_app;Password=change-me`
 4. เปิดเทอร์มินัลที่โฟลเดอร์โปรเจกต์นี้แล้วรัน
    ```bash
    dotnet restore ./src/BookStore.Api/BookStore.Api.csproj
+   dotnet build ./src/BookStore.Api/BookStore.Api.csproj -c Release
    dotnet run --project ./src/BookStore.Api/BookStore.Api.csproj
    ```
-5. เซิร์ฟเวอร์จะเปิดที่ `http://localhost:5000` (หรือพอร์ตที่ .NET กำหนด) และ GraphQL Playground/Schema explorer สามารถเข้าผ่าน `http://localhost:5000/graphql`
+5. เซิร์ฟเวอร์จะเปิดที่ `http://localhost:5000` (หรือพอร์ตที่กำหนดใน `ASPNETCORE_URLS`) และ GraphQL Playground/Schema explorer เข้าผ่าน `http://localhost:5000/graphql`
 
-> **หมายเหตุ:** ถ้าไม่ตั้งค่า connection string ระบบจะ fallback กลับไปใช้ in-memory repository เหมือนเดิม เหมาะกับ workshop ที่ไม่ต้องมีฐานข้อมูลจริง
+### โหมดฐานข้อมูล (In-Memory vs Postgres)
+- `Program.cs` จะพยายามอ่าน connection string จาก `ConnectionStrings:CatalogDb` หรือ `POSTGRES_CONNECTION_STRING`
+- ถ้ามีค่า ระบบจะสร้าง `NpgsqlDataSource` แล้วเลือก `PostgresCatalogRepository` โดยอัตโนมัติ พร้อมสร้างตาราง `catalog_items` และ seed ข้อมูล 3 รายการแรก
+- หากไม่ระบุ connection string ระบบจะ fallback ไปยัง `InMemoryCatalogRepository` เพื่อให้ workshop เริ่มได้ทันทีโดยไม่ต้องมีฐานข้อมูล
+
+### Hot reload สำหรับพัฒนา
+```bash
+dotnet watch run --project ./src/BookStore.Api/BookStore.Api.csproj
+```
+คำสั่งนี้ช่วยให้สอนได้ต่อเนื่อง ระหว่างแก้ Query/Mutation แล้วปล่อยให้ Hot Chocolate reload ให้อัตโนมัติ
+
+> **หมายเหตุเรื่องการทดสอบ:** ตอนนี้ยังไม่มี test project ใต้ `src/` หากต้องการเพิ่ม xUnit + snapshot test ให้สร้างโฟลเดอร์ใหม่แล้วเชื่อมต่อกับ solution ตามแนวทางใน `AGENTS.md`
 
 ### ตัวอย่างการเปิด Postgres แบบรวดเร็วด้วย Docker
 ```bash
@@ -51,7 +70,7 @@ docker run --name bookstore-postgres \
    ```bash
    docker compose up --build -d
    ```
-2. รอ healthcheck ของ Postgres แล้วเข้า `http://localhost:8080/graphql`
+2. รอ healthcheck ของ Postgres แล้วเข้า `http://localhost:8081/graphql`
 3. ดู log ของฝั่ง API
    ```bash
    docker compose logs -f api
@@ -178,5 +197,10 @@ mutation DeleteItem($id: UUID!) {
 - แทนที่ in-memory repository ด้วย database จริง (EF Core, Dapper)
 - เพิ่มระบบ authentication/authorization ในแต่ละ Mutation
 - แยกประเภทสินค้าเพิ่มเติมหรือเพิ่ม field ใหม่ เช่น stock, publishedAt, instructor เป็นต้น
+
+## Troubleshooting & Notes
+- ถ้าพอร์ต 5000 หรือ 8081 ไม่ว่าง ให้ตั้งค่า `ASPNETCORE_URLS=http://localhost:5050` หรือแก้ `docker-compose.yml` ฝั่ง host port แล้วรัน `docker compose up --build` อีกครั้ง
+- Compose ใช้ volume ชื่อ `pgdata` เก็บข้อมูลถาวร หากต้องการเริ่มข้อมูลใหม่ให้ใช้ `docker compose down -v`
+- Repository ทั้งสองแบบ seed ข้อมูลชุดเดียวกัน ทำให้การสาธิตมีข้อมูลตรงกันไม่ว่าจะรันแบบไหน
 
 หวังว่าโปรเจกต์นี้จะช่วยให้การสอน GraphQL กับทีม Front-end เป็นเรื่องง่ายและสนุกมากขึ้น!
