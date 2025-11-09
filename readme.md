@@ -9,7 +9,7 @@
 - **Seeder อัตโนมัติ** ทั้งในหน่วยความจำและฐานข้อมูลจริง ทำให้ demo ได้ทันทีหลังรัน
 - **Docker Compose** ให้ Postgres + API ทำงานร่วมกันรวดเร็ว เหมาะกับ session ที่ต้องการ environment แบบเดียวกันทุกเครื่อง
 - **Image URL** สำหรับโชว์ตัวอย่างปกหนังสือ/สินค้าใน UI ได้เลยทันทีจาก GraphQL
-- **GraphQL Pagination** มี query `catalogItemsPage` สำหรับเลื่อนหน้าทั้งแบบกรอง category และได้ total count (ไม่ส่ง `pageSize` ก็รับทั้งหมดในหน้าเดียวได้)
+- **GraphQL Pagination** มี query `catalogItemsPage` สำหรับเลื่อนหน้าทั้งแบบกรอง category และได้ total count (ไม่ส่ง `pageSize` หรือส่ง `-1` ก็รับทั้งหมดในหน้าเดียวได้)
 
 ## โครงสร้างโปรเจกต์
 
@@ -130,7 +130,7 @@ query GetCatalog($category: CatalogItemCategory) {
 
 #### 2. ดึงข้อมูลแบบแบ่งหน้า
 ```graphql
-query GetCatalogPage($category: CatalogItemCategory, $page: Int = 1, $pageSize: Int) {
+query GetCatalogPage($category: CatalogItemCategory, $page: Int = 1, $pageSize: Int = -1) {
   catalogItemsPage(category: $category, page: $page, pageSize: $pageSize) {
     totalCount
     page
@@ -156,10 +156,10 @@ query GetCatalogPage($category: CatalogItemCategory, $page: Int = 1, $pageSize: 
 ```
 
 #### การดึงข้อมูลทุกหน้า (get all)
-- หากไม่ส่ง `pageSize` (หรือส่งค่า `null/0`) API จะรวมทุก record ไว้ในหน้าเดียว (`page = 1`, `hasNextPage = false`) เหมาะกับ dataset ขนาดเล็ก
-- สำหรับชุดข้อมูลใหญ่ ให้กำหนด `pageSize` ตามความเหมาะสมแล้วไล่โหลดทีละหน้าตามตัวอย่างก่อนหน้า
+- ค่าเริ่มต้นของ `pageSize` คือ `-1` ซึ่งเท่ากับ “ดึงทั้งหมดในหน้าเดียว” (`page = 1`, `hasNextPage = false`) เหมาะสำหรับ dataset ขนาดเล็กหรือช่วง workshop
+- หากต้องการแบ่งหน้าเอง ให้ส่งค่า `pageSize` เป็นจำนวนบวก (สูงสุด 50) แล้วไล่โหลดทีละหน้าตามตัวอย่างข้อ 2
 
-ตัวอย่างการ get all ในครั้งเดียว:
+ตัวอย่างการ get all ด้วยค่าเริ่มต้น (ไม่ต้องส่ง pageSize):
 
 ```graphql
 query GetAllCatalog {

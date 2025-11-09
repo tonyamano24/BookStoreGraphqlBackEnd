@@ -22,9 +22,10 @@ public class Query
         CatalogItemCategory? category,
         [Service] ICatalogRepository repository,
         int page = 1,
-        int? pageSize = null)
+        int pageSize = -1)
     {
         page = Math.Max(1, page);
-        return repository.GetItemsPage(category, page, pageSize);
+        int? normalizedPageSize = pageSize > 0 ? pageSize : null;
+        return repository.GetItemsPage(category, page, normalizedPageSize);
     }
 }
