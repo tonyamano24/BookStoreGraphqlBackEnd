@@ -8,6 +8,7 @@
 - **Type Extension ของ `CatalogItem`** เติม field `categoryDisplayName` และ `durationHours` ที่คำนวณจากข้อมูลจริง
 - **Seeder อัตโนมัติ** ทั้งในหน่วยความจำและฐานข้อมูลจริง ทำให้ demo ได้ทันทีหลังรัน
 - **Docker Compose** ให้ Postgres + API ทำงานร่วมกันรวดเร็ว เหมาะกับ session ที่ต้องการ environment แบบเดียวกันทุกเครื่อง
+- **Image URL** สำหรับโชว์ตัวอย่างปกหนังสือ/สินค้าใน UI ได้เลยทันทีจาก GraphQL
 
 ## โครงสร้างโปรเจกต์
 
@@ -89,6 +90,7 @@ docker run --name bookstore-postgres \
   - `category: CatalogItemCategory!`
   - `price: Decimal!`
   - `durationMinutes: Int!`
+  - `imageUrl: String`
   - `createdAtUtc: DateTime!`
   - **ฟิลด์เสริมจาก type extension**
     - `categoryDisplayName: String!`
@@ -104,6 +106,7 @@ query GetCatalog($category: CatalogItemCategory) {
     title
     category
     categoryDisplayName
+    imageUrl
     price
   }
 }
@@ -125,6 +128,7 @@ query GetItem($id: UUID!) {
     category
     durationMinutes
     durationHours
+    imageUrl
     price
   }
 }
@@ -138,6 +142,7 @@ mutation CreateItem($input: CreateCatalogItemInput!) {
     id
     title
     category
+    imageUrl
     price
   }
 }
@@ -150,7 +155,8 @@ mutation CreateItem($input: CreateCatalogItemInput!) {
     "description": "Lab 3 ชั่วโมงสำหรับทีม Front-end",
     "category": "COURSE",
     "price": 159.99,
-    "durationMinutes": 180
+    "durationMinutes": 180,
+    "imageUrl": "https://placehold.co/600x400?text=GraphQL+Lab"
   }
 }
 ```
@@ -162,6 +168,7 @@ mutation UpdateItem($id: UUID!, $input: UpdateCatalogItemInput!) {
     id
     title
     category
+    imageUrl
     price
   }
 }
@@ -172,7 +179,8 @@ mutation UpdateItem($id: UUID!, $input: UpdateCatalogItemInput!) {
   "id": "<PUT-ID-HERE>",
   "input": {
     "price": 149.00,
-    "description": "อัปเดตคำอธิบาย"
+    "description": "อัปเดตคำอธิบาย",
+    "imageUrl": "https://placehold.co/600x400?text=GraphQL+Lab+v2"
   }
 }
 ```

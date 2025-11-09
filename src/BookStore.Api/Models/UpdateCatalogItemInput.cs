@@ -5,4 +5,5 @@ public record UpdateCatalogItemInput(
     string? Description,
     CatalogItemCategory? Category,
     decimal? Price,
-    int? DurationMinutes);
+    int? DurationMinutes,
+    string? ImageUrl);

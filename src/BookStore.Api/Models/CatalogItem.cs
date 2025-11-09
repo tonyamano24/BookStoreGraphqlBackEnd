@@ -14,5 +14,7 @@ public record CatalogItem
 
     public int DurationMinutes { get; init; }
 
+    public string? ImageUrl { get; init; }
+
     public DateTime CreatedAtUtc { get; init; }
 }

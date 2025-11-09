@@ -28,6 +28,7 @@ public class InMemoryCatalogRepository : ICatalogRepository
             Category = input.Category,
             Price = input.Price,
             DurationMinutes = input.DurationMinutes,
+            ImageUrl = string.IsNullOrWhiteSpace(input.ImageUrl) ? null : input.ImageUrl.Trim(),
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -69,7 +70,13 @@ public class InMemoryCatalogRepository : ICatalogRepository
                 Description = input.Description?.Trim() ?? existing.Description,
                 Category = input.Category ?? existing.Category,
                 Price = input.Price ?? existing.Price,
-                DurationMinutes = input.DurationMinutes ?? existing.DurationMinutes
+                DurationMinutes = input.DurationMinutes ?? existing.DurationMinutes,
+                ImageUrl = input.ImageUrl switch
+                {
+                    null => existing.ImageUrl,
+                    "" => null,
+                    _ => input.ImageUrl.Trim()
+                }
             });
     }
 
@@ -85,6 +92,7 @@ public class InMemoryCatalogRepository : ICatalogRepository
                 Category = CatalogItemCategory.Course,
                 DurationMinutes = 180,
                 Price = 199.00m,
+                ImageUrl = "https://placehold.co/600x400?text=GraphQL+Workshop",
                 CreatedAtUtc = DateTime.UtcNow
             },
             new CatalogItem
@@ -95,6 +103,7 @@ public class InMemoryCatalogRepository : ICatalogRepository
                 Category = CatalogItemCategory.Book,
                 DurationMinutes = 0,
                 Price = 29.90m,
+                ImageUrl = "https://placehold.co/600x400?text=GraphQL+Book",
                 CreatedAtUtc = DateTime.UtcNow
             },
             new CatalogItem
@@ -105,6 +114,7 @@ public class InMemoryCatalogRepository : ICatalogRepository
                 Category = CatalogItemCategory.Merchandise,
                 DurationMinutes = 0,
                 Price = 45.00m,
+                ImageUrl = "https://placehold.co/600x400?text=Dev+Kit",
                 CreatedAtUtc = DateTime.UtcNow
             }
         };

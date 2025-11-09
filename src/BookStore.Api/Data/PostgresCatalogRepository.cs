@@ -31,6 +31,7 @@ public class PostgresCatalogRepository : ICatalogRepository
             Category = input.Category,
             Price = input.Price,
             DurationMinutes = input.DurationMinutes,
+            ImageUrl = string.IsNullOrWhiteSpace(input.ImageUrl) ? null : input.ImageUrl.Trim(),
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -38,8 +39,8 @@ public class PostgresCatalogRepository : ICatalogRepository
         using var command = connection.CreateCommand();
         command.CommandText = @$"
             insert into {TableName}
-            (id, title, description, category, price, duration_minutes, created_at_utc)
-            values (@id, @title, @description, @category, @price, @duration_minutes, @created_at_utc);";
+            (id, title, description, category, price, duration_minutes, image_url, created_at_utc)
+            values (@id, @title, @description, @category, @price, @duration_minutes, @image_url, @created_at_utc);";
 
         command.Parameters.AddWithValue("@id", item.Id);
         command.Parameters.AddWithValue("@title", item.Title);
@@ -47,6 +48,7 @@ public class PostgresCatalogRepository : ICatalogRepository
         command.Parameters.AddWithValue("@category", item.Category.ToString());
         command.Parameters.AddWithValue("@price", item.Price);
         command.Parameters.AddWithValue("@duration_minutes", item.DurationMinutes);
+        command.Parameters.AddWithValue("@image_url", (object?)item.ImageUrl ?? DBNull.Value);
         command.Parameters.AddWithValue("@created_at_utc", item.CreatedAtUtc);
 
         command.ExecuteNonQuery();
@@ -69,7 +71,7 @@ public class PostgresCatalogRepository : ICatalogRepository
         using var connection = _dataSource.OpenConnection();
         using var command = connection.CreateCommand();
         command.CommandText = @$"
-            select id, title, description, category, price, duration_minutes, created_at_utc
+            select id, title, description, category, price, duration_minutes, image_url, created_at_utc
             from {TableName}
             where id = @id;";
         command.Parameters.AddWithValue("@id", id);
@@ -88,7 +90,7 @@ public class PostgresCatalogRepository : ICatalogRepository
         using var connection = _dataSource.OpenConnection();
         using var command = connection.CreateCommand();
         command.CommandText = @$"
-            select id, title, description, category, price, duration_minutes, created_at_utc
+            select id, title, description, category, price, duration_minutes, image_url, created_at_utc
             from {TableName}
             {(category is null ? string.Empty : "where category = @category")}
             order by title asc;";
@@ -119,7 +121,13 @@ public class PostgresCatalogRepository : ICatalogRepository
             Description = input.Description?.Trim() ?? existing.Description,
             Category = input.Category ?? existing.Category,
             Price = input.Price ?? existing.Price,
-            DurationMinutes = input.DurationMinutes ?? existing.DurationMinutes
+            DurationMinutes = input.DurationMinutes ?? existing.DurationMinutes,
+            ImageUrl = input.ImageUrl switch
+            {
+                null => existing.ImageUrl,
+                "" => null,
+                _ => input.ImageUrl.Trim()
+            }
         };
 
         using var connection = _dataSource.OpenConnection();
@@ -130,7 +138,8 @@ public class PostgresCatalogRepository : ICatalogRepository
                 description = @description,
                 category = @category,
                 price = @price,
-                duration_minutes = @duration_minutes
+                duration_minutes = @duration_minutes,
+                image_url = @image_url
             where id = @id;";
 
         command.Parameters.AddWithValue("@id", id);
@@ -139,6 +148,7 @@ public class PostgresCatalogRepository : ICatalogRepository
         command.Parameters.AddWithValue("@category", updated.Category.ToString());
         command.Parameters.AddWithValue("@price", updated.Price);
         command.Parameters.AddWithValue("@duration_minutes", updated.DurationMinutes);
+        command.Parameters.AddWithValue("@image_url", (object?)updated.ImageUrl ?? DBNull.Value);
 
         var affected = command.ExecuteNonQuery();
         if (affected == 0)
@@ -173,9 +183,12 @@ public class PostgresCatalogRepository : ICatalogRepository
                     category text not null,
                     price numeric(12,2) not null,
                     duration_minutes integer not null default 0,
+                    image_url text null,
                     created_at_utc timestamptz not null default (now() at time zone 'utc')
                 );
                 create index if not exists idx_{TableName}_category on {TableName}(category);
+                alter table {TableName}
+                    add column if not exists image_url text null;
             ";
             command.ExecuteNonQuery();
 
@@ -194,7 +207,8 @@ public class PostgresCatalogRepository : ICatalogRepository
             Category = Enum.Parse<CatalogItemCategory>(reader.GetString(3), ignoreCase: true),
             Price = reader.GetDecimal(4),
             DurationMinutes = reader.GetInt32(5),
-            CreatedAtUtc = reader.GetDateTime(6).ToUniversalTime()
+            ImageUrl = reader.IsDBNull(6) ? null : reader.GetString(6),
+            CreatedAtUtc = reader.GetDateTime(7).ToUniversalTime()
         };
     }
 
@@ -218,6 +232,7 @@ public class PostgresCatalogRepository : ICatalogRepository
                 Category = CatalogItemCategory.Course,
                 DurationMinutes = 180,
                 Price = 199.00m,
+                ImageUrl = "https://placehold.co/600x400?text=GraphQL+Workshop",
                 CreatedAtUtc = DateTime.UtcNow
             },
             new CatalogItem
@@ -228,6 +243,7 @@ public class PostgresCatalogRepository : ICatalogRepository
                 Category = CatalogItemCategory.Book,
                 DurationMinutes = 0,
                 Price = 29.90m,
+                ImageUrl = "https://placehold.co/600x400?text=GraphQL+Book",
                 CreatedAtUtc = DateTime.UtcNow
             },
             new CatalogItem
@@ -238,6 +254,7 @@ public class PostgresCatalogRepository : ICatalogRepository
                 Category = CatalogItemCategory.Merchandise,
                 DurationMinutes = 0,
                 Price = 45.00m,
+                ImageUrl = "https://placehold.co/600x400?text=Dev+Kit",
                 CreatedAtUtc = DateTime.UtcNow
             }
         };
@@ -247,8 +264,8 @@ public class PostgresCatalogRepository : ICatalogRepository
             using var insert = connection.CreateCommand();
             insert.CommandText = @$"
                 insert into {TableName}
-                (id, title, description, category, price, duration_minutes, created_at_utc)
-                values (@id, @title, @description, @category, @price, @duration_minutes, @created_at_utc);";
+                (id, title, description, category, price, duration_minutes, image_url, created_at_utc)
+                values (@id, @title, @description, @category, @price, @duration_minutes, @image_url, @created_at_utc);";
 
             insert.Parameters.AddWithValue("@id", item.Id);
             insert.Parameters.AddWithValue("@title", item.Title);
@@ -256,6 +273,7 @@ public class PostgresCatalogRepository : ICatalogRepository
             insert.Parameters.AddWithValue("@category", item.Category.ToString());
             insert.Parameters.AddWithValue("@price", item.Price);
             insert.Parameters.AddWithValue("@duration_minutes", item.DurationMinutes);
+            insert.Parameters.AddWithValue("@image_url", (object?)item.ImageUrl ?? DBNull.Value);
             insert.Parameters.AddWithValue("@created_at_utc", item.CreatedAtUtc);
 
             insert.ExecuteNonQuery();
