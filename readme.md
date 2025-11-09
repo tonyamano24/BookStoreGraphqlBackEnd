@@ -156,28 +156,28 @@ query GetCatalogPage($category: CatalogItemCategory, $page: Int = 1, $pageSize: 
 ```
 
 #### การดึงข้อมูลทุกหน้า (get all)
-- API จำกัด `pageSize` ไว้สูงสุดที่ 50 ถ้าต้องการดึงทั้งหมดให้ตั้ง `pageSize` เป็น 50 แล้วเรียก `catalogItemsPage` ตั้งแต่ `page = 1` ไล่เพิ่มค่าหน้าไปเรื่อย ๆ จน `hasNextPage` เป็น `false`
-- แต่ละรอบให้ต่อผลลัพธ์ `items` สะสมไว้ใน client ฝั่งของคุณ
+1. ตั้ง `pageSize` เป็นค่าสูงสุดที่รองรับ (50) เพื่อให้จำนวนน้อยรอบที่สุด
+2. เรียกเพจแรก (`page = 1`) แล้วใช้ค่าที่ตอบกลับ (`totalPages` หรือ `totalCount`) เพื่อคำนวณจำนวนรอบที่เหลือ
+3. ไล่โหลดทีละหน้า (`page++`) จน `page > totalPages` โดยสะสม `items` ไว้ฝั่ง client
 
 ตัวอย่าง pseudo code (JavaScript):
 
 ```javascript
-let page = 1;
 const pageSize = 50;
-let allItems = [];
-let hasNextPage = true;
+let page = 1;
+let totalPages = 1;
+const allItems = [];
 
-while (hasNextPage) {
-  const result = await graphQLClient.request(
+do {
+  const { catalogItemsPage } = await graphQLClient.request(
     GET_CATALOG_PAGE,
     { page, pageSize }
   );
 
-  const { items, hasNextPage: next } = result.catalogItemsPage;
-  allItems = allItems.concat(items);
-  hasNextPage = next;
+  allItems.push(...catalogItemsPage.items);
+  totalPages = catalogItemsPage.totalPages;
   page += 1;
-}
+} while (page <= totalPages);
 
 console.log(`รวม ${allItems.length} รายการ`);
 ```
