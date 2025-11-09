@@ -58,10 +58,9 @@ public class InMemoryCatalogRepository : ICatalogRepository
         return query.OrderBy(item => item.Title).ToArray();
     }
 
-    public CatalogItemsPage GetItemsPage(CatalogItemCategory? category, int page, int pageSize)
+    public CatalogItemsPage GetItemsPage(CatalogItemCategory? category, int page, int? pageSize)
     {
         page = Math.Max(1, page);
-        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
         var query = _items.Values.AsEnumerable();
         if (category is not null)
@@ -72,10 +71,19 @@ public class InMemoryCatalogRepository : ICatalogRepository
         query = query.OrderBy(item => item.Title);
 
         var total = query.Count();
-        var skip = (page - 1) * pageSize;
-        var items = query.Skip(skip).Take(pageSize).ToArray();
 
-        return new CatalogItemsPage(items, total, page, pageSize);
+        if (pageSize is null || pageSize <= 0)
+        {
+            var allItems = query.ToArray();
+            var effectivePageSize = total > 0 ? total : 1;
+            return new CatalogItemsPage(allItems, total, 1, effectivePageSize);
+        }
+
+        var take = Math.Clamp(pageSize.Value, 1, MaxPageSize);
+        var skip = (page - 1) * take;
+        var items = query.Skip(skip).Take(take).ToArray();
+
+        return new CatalogItemsPage(items, total, page, take);
     }
 
     public CatalogItem Update(Guid id, UpdateCatalogItemInput input)

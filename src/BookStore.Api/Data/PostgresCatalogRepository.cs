@@ -111,19 +111,47 @@ public class PostgresCatalogRepository : ICatalogRepository
         return results;
     }
 
-    public CatalogItemsPage GetItemsPage(CatalogItemCategory? category, int page, int pageSize)
+    public CatalogItemsPage GetItemsPage(CatalogItemCategory? category, int page, int? pageSize)
     {
         page = Math.Max(1, page);
-        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
-        var skip = (page - 1) * pageSize;
-
         using var connection = _dataSource.OpenConnection();
+
+        var whereClause = category is null ? string.Empty : "where category = @category";
+
+        if (pageSize is null || pageSize <= 0)
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @$"
+                select id, title, description, category, price, duration_minutes, image_url, created_at_utc
+                from {TableName}
+                {whereClause}
+                order by title asc;";
+
+            if (category is not null)
+            {
+                command.Parameters.AddWithValue("@category", category.Value.ToString());
+            }
+
+            using var reader = command.ExecuteReader();
+            var allItems = new List<CatalogItem>();
+            while (reader.Read())
+            {
+                allItems.Add(Map(reader));
+            }
+
+            var totalAll = allItems.Count;
+            var effectivePageSize = totalAll > 0 ? totalAll : 1;
+            return new CatalogItemsPage(allItems, totalAll, 1, effectivePageSize);
+        }
+
+        var take = Math.Clamp(pageSize.Value, 1, MaxPageSize);
+        var skip = (page - 1) * take;
 
         using var countCommand = connection.CreateCommand();
         countCommand.CommandText = @$"
             select count(*)
             from {TableName}
-            {(category is null ? string.Empty : "where category = @category")};";
+            {whereClause};";
         if (category is not null)
         {
             countCommand.Parameters.AddWithValue("@category", category.Value.ToString());
@@ -135,7 +163,7 @@ public class PostgresCatalogRepository : ICatalogRepository
         dataCommand.CommandText = @$"
             select id, title, description, category, price, duration_minutes, image_url, created_at_utc
             from {TableName}
-            {(category is null ? string.Empty : "where category = @category")}
+            {whereClause}
             order by title asc
             limit @take offset @skip;";
 
@@ -144,17 +172,17 @@ public class PostgresCatalogRepository : ICatalogRepository
             dataCommand.Parameters.AddWithValue("@category", category.Value.ToString());
         }
 
-        dataCommand.Parameters.AddWithValue("@take", pageSize);
+        dataCommand.Parameters.AddWithValue("@take", take);
         dataCommand.Parameters.AddWithValue("@skip", skip);
 
-        using var reader = dataCommand.ExecuteReader();
+        using var readerPaged = dataCommand.ExecuteReader();
         var items = new List<CatalogItem>();
-        while (reader.Read())
+        while (readerPaged.Read())
         {
-            items.Add(Map(reader));
+            items.Add(Map(readerPaged));
         }
 
-        return new CatalogItemsPage(items, total, page, pageSize);
+        return new CatalogItemsPage(items, total, page, take);
     }
 
     public CatalogItem Update(Guid id, UpdateCatalogItemInput input)

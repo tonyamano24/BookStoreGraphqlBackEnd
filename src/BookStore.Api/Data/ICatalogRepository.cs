@@ -14,5 +14,5 @@ public interface ICatalogRepository
 
     bool Delete(Guid id);
 
-    CatalogItemsPage GetItemsPage(CatalogItemCategory? category, int page, int pageSize);
+    CatalogItemsPage GetItemsPage(CatalogItemCategory? category, int page, int? pageSize);
 }

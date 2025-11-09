@@ -9,7 +9,7 @@
 - **Seeder อัตโนมัติ** ทั้งในหน่วยความจำและฐานข้อมูลจริง ทำให้ demo ได้ทันทีหลังรัน
 - **Docker Compose** ให้ Postgres + API ทำงานร่วมกันรวดเร็ว เหมาะกับ session ที่ต้องการ environment แบบเดียวกันทุกเครื่อง
 - **Image URL** สำหรับโชว์ตัวอย่างปกหนังสือ/สินค้าใน UI ได้เลยทันทีจาก GraphQL
-- **GraphQL Pagination** มี query `catalogItemsPage` สำหรับเลื่อนหน้าทั้งแบบกรอง category และได้ total count
+- **GraphQL Pagination** มี query `catalogItemsPage` สำหรับเลื่อนหน้าทั้งแบบกรอง category และได้ total count (ไม่ส่ง `pageSize` ก็รับทั้งหมดในหน้าเดียวได้)
 
 ## โครงสร้างโปรเจกต์
 
@@ -130,7 +130,7 @@ query GetCatalog($category: CatalogItemCategory) {
 
 #### 2. ดึงข้อมูลแบบแบ่งหน้า
 ```graphql
-query GetCatalogPage($category: CatalogItemCategory, $page: Int = 1, $pageSize: Int = 6) {
+query GetCatalogPage($category: CatalogItemCategory, $page: Int = 1, $pageSize: Int) {
   catalogItemsPage(category: $category, page: $page, pageSize: $pageSize) {
     totalCount
     page
@@ -156,30 +156,22 @@ query GetCatalogPage($category: CatalogItemCategory, $page: Int = 1, $pageSize: 
 ```
 
 #### การดึงข้อมูลทุกหน้า (get all)
-1. ตั้ง `pageSize` เป็นค่าสูงสุดที่รองรับ (50) เพื่อให้จำนวนน้อยรอบที่สุด
-2. เรียกเพจแรก (`page = 1`) แล้วใช้ค่าที่ตอบกลับ (`totalPages` หรือ `totalCount`) เพื่อคำนวณจำนวนรอบที่เหลือ
-3. ไล่โหลดทีละหน้า (`page++`) จน `page > totalPages` โดยสะสม `items` ไว้ฝั่ง client
+- หากไม่ส่ง `pageSize` (หรือส่งค่า `null/0`) API จะรวมทุก record ไว้ในหน้าเดียว (`page = 1`, `hasNextPage = false`) เหมาะกับ dataset ขนาดเล็ก
+- สำหรับชุดข้อมูลใหญ่ ให้กำหนด `pageSize` ตามความเหมาะสมแล้วไล่โหลดทีละหน้าตามตัวอย่างก่อนหน้า
 
-ตัวอย่าง pseudo code (JavaScript):
+ตัวอย่างการ get all ในครั้งเดียว:
 
-```javascript
-const pageSize = 50;
-let page = 1;
-let totalPages = 1;
-const allItems = [];
-
-do {
-  const { catalogItemsPage } = await graphQLClient.request(
-    GET_CATALOG_PAGE,
-    { page, pageSize }
-  );
-
-  allItems.push(...catalogItemsPage.items);
-  totalPages = catalogItemsPage.totalPages;
-  page += 1;
-} while (page <= totalPages);
-
-console.log(`รวม ${allItems.length} รายการ`);
+```graphql
+query GetAllCatalog {
+  catalogItemsPage {
+    totalCount
+    items {
+      id
+      title
+      category
+    }
+  }
+}
 ```
 
 #### 3. ดึงรายละเอียดสินค้า/คอร์สตามรหัส
