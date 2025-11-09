@@ -9,6 +9,7 @@
 - **Seeder อัตโนมัติ** ทั้งในหน่วยความจำและฐานข้อมูลจริง ทำให้ demo ได้ทันทีหลังรัน
 - **Docker Compose** ให้ Postgres + API ทำงานร่วมกันรวดเร็ว เหมาะกับ session ที่ต้องการ environment แบบเดียวกันทุกเครื่อง
 - **Image URL** สำหรับโชว์ตัวอย่างปกหนังสือ/สินค้าใน UI ได้เลยทันทีจาก GraphQL
+- **GraphQL Pagination** มี query `catalogItemsPage` สำหรับเลื่อนหน้าทั้งแบบกรอง category และได้ total count
 
 ## โครงสร้างโปรเจกต์
 
@@ -97,6 +98,15 @@ docker run --name bookstore-postgres \
     - `durationHours: Float!`
 - `CatalogItemCategory` (enum): `BOOK`, `COURSE`, `MERCHANDISE`
 
+- `CatalogItemsPage`
+  - `items: [CatalogItem!]!`
+  - `totalCount: Int!`
+  - `page: Int!`
+  - `pageSize: Int!`
+  - `totalPages: Int!`
+  - `hasPreviousPage: Boolean!`
+  - `hasNextPage: Boolean!`
+
 ### Query ตัวอย่าง
 #### 1. ดึงรายการทั้งหมด (พร้อมตัวกรอง category)
 ```graphql
@@ -118,7 +128,34 @@ query GetCatalog($category: CatalogItemCategory) {
 }
 ```
 
-#### 2. ดึงรายละเอียดสินค้า/คอร์สตามรหัส
+#### 2. ดึงข้อมูลแบบแบ่งหน้า
+```graphql
+query GetCatalogPage($category: CatalogItemCategory, $page: Int = 1, $pageSize: Int = 6) {
+  catalogItemsPage(category: $category, page: $page, pageSize: $pageSize) {
+    totalCount
+    page
+    totalPages
+    hasNextPage
+    items {
+      id
+      title
+      category
+      imageUrl
+      price
+    }
+  }
+}
+```
+ตัวอย่างตัวแปร:
+```json
+{
+  "category": "BOOK",
+  "page": 2,
+  "pageSize": 4
+}
+```
+
+#### 3. ดึงรายละเอียดสินค้า/คอร์สตามรหัส
 ```graphql
 query GetItem($id: UUID!) {
   catalogItemById(id: $id) {

@@ -6,6 +6,7 @@ namespace BookStore.Api.Data;
 public class PostgresCatalogRepository : ICatalogRepository
 {
     private const string TableName = "catalog_items";
+    private const int MaxPageSize = 50;
     private readonly NpgsqlDataSource _dataSource;
     private readonly object _initLock = new();
     private bool _initialized;
@@ -108,6 +109,52 @@ public class PostgresCatalogRepository : ICatalogRepository
         }
 
         return results;
+    }
+
+    public CatalogItemsPage GetItemsPage(CatalogItemCategory? category, int page, int pageSize)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+        var skip = (page - 1) * pageSize;
+
+        using var connection = _dataSource.OpenConnection();
+
+        using var countCommand = connection.CreateCommand();
+        countCommand.CommandText = @$"
+            select count(*)
+            from {TableName}
+            {(category is null ? string.Empty : "where category = @category")};";
+        if (category is not null)
+        {
+            countCommand.Parameters.AddWithValue("@category", category.Value.ToString());
+        }
+
+        var total = Convert.ToInt32(countCommand.ExecuteScalar());
+
+        using var dataCommand = connection.CreateCommand();
+        dataCommand.CommandText = @$"
+            select id, title, description, category, price, duration_minutes, image_url, created_at_utc
+            from {TableName}
+            {(category is null ? string.Empty : "where category = @category")}
+            order by title asc
+            limit @take offset @skip;";
+
+        if (category is not null)
+        {
+            dataCommand.Parameters.AddWithValue("@category", category.Value.ToString());
+        }
+
+        dataCommand.Parameters.AddWithValue("@take", pageSize);
+        dataCommand.Parameters.AddWithValue("@skip", skip);
+
+        using var reader = dataCommand.ExecuteReader();
+        var items = new List<CatalogItem>();
+        while (reader.Read())
+        {
+            items.Add(Map(reader));
+        }
+
+        return new CatalogItemsPage(items, total, page, pageSize);
     }
 
     public CatalogItem Update(Guid id, UpdateCatalogItemInput input)

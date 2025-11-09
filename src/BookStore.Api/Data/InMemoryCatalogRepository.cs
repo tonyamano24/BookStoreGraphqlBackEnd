@@ -6,6 +6,7 @@ namespace BookStore.Api.Data;
 
 public class InMemoryCatalogRepository : ICatalogRepository
 {
+    private const int MaxPageSize = 50;
     private readonly ConcurrentDictionary<Guid, CatalogItem> _items = new();
 
     public InMemoryCatalogRepository()
@@ -55,6 +56,26 @@ public class InMemoryCatalogRepository : ICatalogRepository
         }
 
         return query.OrderBy(item => item.Title).ToArray();
+    }
+
+    public CatalogItemsPage GetItemsPage(CatalogItemCategory? category, int page, int pageSize)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
+        var query = _items.Values.AsEnumerable();
+        if (category is not null)
+        {
+            query = query.Where(item => item.Category == category);
+        }
+
+        query = query.OrderBy(item => item.Title);
+
+        var total = query.Count();
+        var skip = (page - 1) * pageSize;
+        var items = query.Skip(skip).Take(pageSize).ToArray();
+
+        return new CatalogItemsPage(items, total, page, pageSize);
     }
 
     public CatalogItem Update(Guid id, UpdateCatalogItemInput input)

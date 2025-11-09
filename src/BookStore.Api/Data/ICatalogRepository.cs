@@ -13,4 +13,6 @@ public interface ICatalogRepository
     CatalogItem Update(Guid id, UpdateCatalogItemInput input);
 
     bool Delete(Guid id);
+
+    CatalogItemsPage GetItemsPage(CatalogItemCategory? category, int page, int pageSize);
 }

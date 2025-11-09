@@ -17,4 +17,15 @@ public class Query
     {
         return repository.GetById(id);
     }
+
+    public CatalogItemsPage GetCatalogItemsPage(
+        CatalogItemCategory? category,
+        [Service] ICatalogRepository repository,
+        int page = 1,
+        int pageSize = 10)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 50);
+        return repository.GetItemsPage(category, page, pageSize);
+    }
 }
